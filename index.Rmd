@@ -64,7 +64,7 @@ nycdatalabels <- sprintf(
 
 
 ```{r}
-leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>% 
+map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
   addPolygons(data=st_geometry(nycdata),
               fillColor = nyccolor(nycdata$estimate),
@@ -81,6 +81,9 @@ leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>%
              housingdata$Latitude, 
              popup = as.character(housingdata$All.Counted.Units),
              clusterOptions = markerClusterOptions())
+```
 
+```{r}
+saveWidget(map,"index.html")
 ```
 
