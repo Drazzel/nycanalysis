@@ -54,8 +54,8 @@ nycdatalabeloptions <- labelOptions(
 ```{r, results='hide'}
 nycdatalabels <- sprintf(
   paste0(
-  "<strong>Name: %s</strong><br/>",
-  "<strong>Median Income: %g</strong>"),
+  "<strong>Name: </strong>%s<br/>",
+  "<strong>Median Income in 2017: </strong>%g"),
   nycdata$NAME,
   nycdata$estimate
   ) %>% 
