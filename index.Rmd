@@ -6,6 +6,8 @@ output: html_document
 ---
 
 ```{r}
+rm(list = ls())
+
 library(tidyverse)
 library(sf)
 library(viridis)
@@ -14,6 +16,9 @@ library(maps)
 library(htmlwidgets)
 library(tidycensus)
 library(htmltools)
+library(tigris)
+
+options(tigris_use_cache = TRUE)
 ```
 
 ```{r}
@@ -28,9 +33,30 @@ nycdata <- get_acs(geography = "tract",
         geometry = T,
         year = 2017)
 
+nycdata2 <- nycdata <- get_acs(geography = "tract",
+        variables = "B19013_001",
+        state = "NY",
+        county = c("New York","Kings","Queens","Bronx","Richmond"),
+        geometry = T,
+        year = 2017,
+        cb = FALSE)
+```
+
+```{r}
+st_erase <- function(x, y) {
+  st_difference(x, st_union(st_combine(y)))
+  }
+
+ny_water <- area_water("NY", "New York", class = "sf")
+
+ny_erase <- st_erase(nycdata2, ny_water)
+```
+
+
+```{r}
 nyccolor <- colorNumeric(
   palette = "magma",
-  domain = nycdata$estimate)
+  domain = nycdata2$estimate)
 ```
 
 ```{r}
@@ -56,8 +82,8 @@ nycdatalabels <- sprintf(
   paste0(
   "<strong>Name: </strong>%s<br/>",
   "<strong>Median Income in 2017: </strong>%g"),
-  nycdata$NAME,
-  nycdata$estimate
+  nycdata2$NAME,
+  nycdata2$estimate
   ) %>% 
   lapply(HTML)
 ```
@@ -66,8 +92,8 @@ nycdatalabels <- sprintf(
 ```{r}
 map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>% 
   addProviderTiles(providers$CartoDB.Positron) %>% 
-  addPolygons(data=st_geometry(nycdata),
-              fillColor = nyccolor(nycdata$estimate),
+  addPolygons(data=st_geometry(nycdata2),
+              fillColor = nyccolor(nycdata2$estimate),
               color = "magma",
               weight= .3,
               smoothFactor = .2,
