@@ -97,28 +97,39 @@ nycdatalabels <- sprintf(
 
 ```{r}
 map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>% 
-  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>%
   addPolygons(data=st_geometry(nycdata2),
               fillColor = nyccolor(nycdata2$estimate),
               color = "magma",
               weight= .3,
               smoothFactor = .2,
               fillOpacity = .55,
-              label = nycdatalabels,
-              labelOptions = nycdatalabeloptions,
+              popup  = nycdatalabels,
+              popupOptions = nycdatalabeloptions,
               group = "Income",
               highlightOptions = nycdatahighlights
               ) %>% 
   addCircleMarkers(housingdata$Longitude, 
              housingdata$Latitude, 
-             popup = as.character(housingdata$All.Counted.Units),
+             radius = 7.5,
+             stroke = FALSE,
+             fillOpacity = .5,
+             label = as.character(housingdata$All.Counted.Units),
+             group = "Housing Units",
              clusterOptions = markerClusterOptions()) %>% 
   addLegend(
             title = "Median Income",
             pal = nyccolor,
             values = nycdata2$estimate,
             position = "topright",
-            group="Income")
+            group="Income") %>% 
+  addLayersControl(
+    overlayGroups = c("Income", "Housing Units"),
+    position = "bottomright")
+```
+
+```{r}
+map
 ```
 
 
