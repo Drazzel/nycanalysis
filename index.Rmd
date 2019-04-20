@@ -5,26 +5,84 @@ date: "4/19/2019"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r}
+library(tidyverse)
+library(sf)
+library(viridis)
+library(leaflet)
+library(maps)
+library(htmlwidgets)
+library(tidycensus)
+library(htmltools)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+codebook <- load_variables(2017,"acs5")
 ```
 
-## Including Plots
+```{r}
+nycdata <- get_acs(geography = "tract",
+        variables = "B19013_001",
+        state = "NY",
+        county = c("New York","Kings","Queens","Bronx","Richmond"),
+        geometry = T,
+        year = 2017)
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+nyccolor <- colorNumeric(
+  palette = "magma",
+  domain = nycdata$estimate)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+housingdata <- read.csv("Housing_New_York_Units_by_Building.csv")
+glimpse(housingdata)
+```
+
+```{r}
+nycdatahighlights <- highlightOptions(
+  weight = 4.5,
+  color = "#ffffff",
+  fillOpacity = .5,
+  bringToFront = TRUE)
+
+nycdatalabeloptions <- labelOptions(
+  style = list("font-weight" = "normal", padding = "3px 8px"),
+  textsize = "15px",
+  direction = "auto")
+```
+
+```{r, results='hide'}
+nycdatalabels <- sprintf(
+  paste0(
+  "<strong>Name: %s</strong><br/>",
+  "<strong>Median Income: %g</strong>"),
+  nycdata$NAME,
+  nycdata$estimate
+  ) %>% 
+  lapply(HTML)
+```
+
+
+```{r}
+leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addPolygons(data=st_geometry(nycdata),
+              fillColor = nyccolor(nycdata$estimate),
+              color = "magma",
+              weight= .3,
+              smoothFactor = .2,
+              fillOpacity = .55,
+              label = nycdatalabels,
+              labelOptions = nycdatalabeloptions,
+              group = "Paratransit",
+              highlightOptions = nycdatahighlights
+              ) %>% 
+  addCircleMarkers(housingdata$Longitude, 
+             housingdata$Latitude, 
+             popup = as.character(housingdata$All.Counted.Units),
+             clusterOptions = markerClusterOptions())
+  
+  
+  
+```
+
