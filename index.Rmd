@@ -124,7 +124,7 @@ map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>%
             position = "topright",
             group="Income") %>% 
   addLayersControl(
-    overlayGroups = c("Income", "Housing Units"),
+    overlayGroups = c("Income", "Total Affordable Housing Units Available by Property"),
     position = "bottomright")
 ```
 
