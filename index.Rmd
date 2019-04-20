@@ -47,9 +47,15 @@ st_erase <- function(x, y) {
   st_difference(x, st_union(st_combine(y)))
   }
 
-ny_water <- area_water("NY", "New York", class = "sf")
+mh_water <- area_water("NY", "New York", class = "sf")
+bx_water <- area_water("NY", "Bronx", class = "sf")
+bk_water <- area_water("NY", "Kings", class = "sf")
+qu_water <- area_water("NY", "Queens", class = "sf")
+si_water <- area_water("NY", "Richmond", class = "sf")
 
-ny_erase <- st_erase(nycdata2, ny_water)
+ny_water <- rbind(mh_water,bx_water,bk_water,qu_water,si_water)
+
+nycdata2 <- st_erase(nycdata2, ny_water)
 ```
 
 
