@@ -106,14 +106,21 @@ map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>%
               fillOpacity = .55,
               label = nycdatalabels,
               labelOptions = nycdatalabeloptions,
-              group = "Paratransit",
+              group = "Income",
               highlightOptions = nycdatahighlights
               ) %>% 
   addCircleMarkers(housingdata$Longitude, 
              housingdata$Latitude, 
              popup = as.character(housingdata$All.Counted.Units),
-             clusterOptions = markerClusterOptions())
+             clusterOptions = markerClusterOptions()) %>% 
+  addLegend(
+            title = "Median Income",
+            pal = nyccolor,
+            values = nycdata2$estimate,
+            position = "topright",
+            group="Income")
 ```
+
 
 ```{r}
 saveWidget(map,"index.html")
