@@ -81,8 +81,6 @@ leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>%
              housingdata$Latitude, 
              popup = as.character(housingdata$All.Counted.Units),
              clusterOptions = markerClusterOptions())
-  
-  
-  
+
 ```
 
