@@ -105,7 +105,7 @@ housingdatalabels <- sprintf(
   "<strong># of Available Moderate Income Units: </strong>%g<br/>",
   "<strong># of Available Middle Income Units: </strong>%g<br/>",
   "<strong># of Available Other Income Units: </strong>%g<br/>",
-  "<strong># of Available Total Units: </strong>%g<br/>"),
+  "<strong># of Available Rental Units: </strong>%g<br/>"),
   housingdata$Project.Name,
   as.character(paste0(housingdata$Number,sep=" ",housingdata$Street)),
   housingdata$Extremely.Low.Income.Units,
@@ -114,17 +114,27 @@ housingdatalabels <- sprintf(
   housingdata$Moderate.Income.Units,
   housingdata$Middle.Income.Units,
   housingdata$Other.Income.Units,
-  housingdata$Total.Units
+  housingdata$Counted.Rental.Units
   ) %>% 
   lapply(HTML)
+```
 
-getColor <- function(housingdata) {
-  sapply(housingdata$Total.Units, function(Total.Units) {
-  if(Total.Units >= 100) {
-    "green"
+```{r}
+housingcolor <- colorBin(
+  palette = "viridis",
+  domain = housingdata$Counted.Rental.Units,
+  bins = c(0,50,100,150,200,1000),
+  right = T)
+
+getRadius <- function(housingdata) {
+  sapply(housingdata$Counted.Rental.Units, function(Counted.Rental.Units) {
+  if(Counted.Rental.Units >=200)  {
+    10
+  } else if(Counted.Rental.Units >= 100) {
+    7.5
   } else {
-    "red"
-  } })
+    5
+  }  })
 }
 ```
 
@@ -142,23 +152,27 @@ map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>%
               popupOptions = nycdatalabeloptions,
               group = "Income",
               highlightOptions = nycdatahighlights
-              ) %>% 
-  addCircleMarkers(housingdata$Longitude, 
-             housingdata$Latitude,
-             color = getColor(housingdata),
-             radius = ifelse(housingdata$Total.Units >= 100, 10, 5),
-             stroke = FALSE,
-             fillOpacity = .5,
-             label = housingdatalabels,
-             group = "Total Affordable Housing Units Available by Property") %>% 
-  addLegend(
-            title = "Median Income",
+  ) %>% 
+  addLegend(title = "Median Income",
             pal = nyccolor,
             values = nycdata2$estimate,
             position = "topright",
             group="Income") %>% 
+  addCircleMarkers(housingdata$Longitude, 
+                   housingdata$Latitude,
+                   color = housingcolor(housingdata$Counted.Rental.Units),
+                   radius = getRadius(housingdata),
+                   stroke = FALSE,
+                   fillOpacity = .5,
+                   label = housingdatalabels,
+                   group = "Housing") %>% 
+  addLegend(title = "Number of Units Available",
+            pal = housingcolor,
+            values = housingdata$Counted.Rental.Units,
+            position = "topright",
+            group = "Housing") %>% 
   addLayersControl(
-    overlayGroups = c("Income", "Total Affordable Housing Units Available by Property"),
+    overlayGroups = c("Income", "Housing"),
     position = "bottomright")
 ```
 
