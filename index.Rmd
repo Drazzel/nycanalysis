@@ -26,7 +26,7 @@ codebook <- load_variables(2017,"acs5")
 ```
 
 ```{r}
-nycdata <- get_acs(geography = "tract",
+boroughboundaries <- get_acs(geography = "county",
         variables = "B19013_001",
         state = "NY",
         county = c("New York","Kings","Queens","Bronx","Richmond"),
@@ -56,6 +56,10 @@ si_water <- area_water("NY", "Richmond", class = "sf")
 ny_water <- rbind(mh_water,bx_water,bk_water,qu_water,si_water)
 
 nycdata2 <- st_erase(nycdata2, ny_water)
+```
+
+```{r}
+boroughboundaries <- st_erase(boroughboundaries, ny_water)
 ```
 
 
@@ -138,10 +142,16 @@ getRadius <- function(housingdata) {
 }
 ```
 
-
 ```{r}
 map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>% 
   addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(data = st_geometry(boroughboundaries),
+              fillColor = NULL,
+              color = "blue",
+              weight = 1,
+              fillOpacity = .01,
+              smoothFactor = .2
+              ) %>% 
   addPolygons(data=st_geometry(nycdata2),
               fillColor = nyccolor(nycdata2$estimate),
               color = "magma",
