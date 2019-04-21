@@ -148,8 +148,7 @@ map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>%
              stroke = FALSE,
              fillOpacity = .5,
              label = housingdatalabels,
-             group = "Total Affordable Housing Units Available by Property",
-             clusterOptions = markerClusterOptions()) %>% 
+             group = "Total Affordable Housing Units Available by Property") %>% 
   addLegend(
             title = "Median Income",
             pal = nyccolor,
