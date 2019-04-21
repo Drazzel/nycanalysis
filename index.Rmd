@@ -147,9 +147,9 @@ map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
   addPolygons(data = st_geometry(boroughboundaries),
               fillColor = NULL,
-              color = "blue",
-              weight = 1,
-              fillOpacity = .01,
+              color = "black",
+              weight = 2.5,
+              fillOpacity = .001,
               smoothFactor = .2
               ) %>% 
   addPolygons(data=st_geometry(nycdata2),
