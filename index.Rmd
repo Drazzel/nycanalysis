@@ -98,6 +98,7 @@ nycdatalabels <- sprintf(
 housingdatalabels <- sprintf(
   paste0(
   "<strong>Project Name: </strong>%s<br/>",
+  "<strong>Address: </strong>%s<br/>",
   "<strong># of Available Extremely Low Income Units: </strong>%g<br/>",
   "<strong># of Available Very Low Income Units: </strong>%g<br/>",
   "<strong># of Available Low Income Units: </strong>%g<br/>",
@@ -106,6 +107,7 @@ housingdatalabels <- sprintf(
   "<strong># of Available Other Income Units: </strong>%g<br/>",
   "<strong># of Available Total Units: </strong>%g<br/>"),
   housingdata$Project.Name,
+  as.character(paste0(housingdata$Number,sep=" ",housingdata$Street)),
   housingdata$Extremely.Low.Income.Units,
   housingdata$Very.Low.Income.Units,
   housingdata$Low.Income.Units,
