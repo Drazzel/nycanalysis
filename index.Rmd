@@ -21,7 +21,7 @@ library(tigris)
 options(tigris_use_cache = TRUE)
 ```
 
-```{r, eval=FALSE}
+```{r}
 codebook <- load_variables(2017,"acs5")
 ```
 
@@ -33,7 +33,7 @@ boroughboundaries <- get_acs(geography = "county",
         geometry = T,
         year = 2017)
 
-nycdata2 <- nycdata <- get_acs(geography = "tract",
+nycdata <- get_acs(geography = "tract",
         variables = "B19013_001",
         state = "NY",
         county = c("New York","Kings","Queens","Bronx","Richmond"),
@@ -55,7 +55,7 @@ si_water <- area_water("NY", "Richmond", class = "sf")
 
 ny_water <- rbind(mh_water,bx_water,bk_water,qu_water,si_water)
 
-nycdata2 <- st_erase(nycdata2, ny_water)
+nycdata2 <- st_erase(nycdata, ny_water)
 ```
 
 ```{r}
@@ -188,5 +188,77 @@ map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>%
 
 ```{r}
 saveWidget(map,"index.html")
+```
+
+EVERYTHING BELOW THIS POINT IS EXPERIMENTAL TO ADD RACE TO THE MAP 
+
+```{r}
+rm(list=ls())
+
+racevars <- codebook %>% filter(str_detect(label,"race")) %>% filter(str_detect(label,"Population of one"))
+
+acsracevars <- as.list(racevars[2:7,1])
+
+racedataindi <- get_acs(geography = "tract",
+        variables = unlist(acsracevars),
+        state = "NY",
+        county = c("New York","Kings","Queens","Bronx","Richmond"),
+        geometry = T,
+        year = 2017,
+        cb = FALSE)
+
+# MAKE EACH RACE ITS OWN COLUMN/VARIABLE OTHERWISE IT WON'T WORK! SIMPLE
+
+racedatatotal <- get_acs(geography = "tract",
+        variables = as.character(racevars[1,1]),
+        state = "NY",
+        county = c("New York","Kings","Queens","Bronx","Richmond"),
+        geometry = T,
+        year = 2017,
+        cb = FALSE)
+
+
+racedatatotal$geometry <- NULL
+
+racedata <- merge(racedataindi,racedatatotal,c("NAME","GEOID"))
+racedat <- racedata %>% select(-variable.y) %>% mutate(percent=estimate.x/estimate.y)
+racedat <- st_erase(racedat,ny_water)
+
+racedatahighlights <- highlightOptions(
+  weight = 4.5,
+  color = "#ffffff",
+  fillOpacity = .5,
+  bringToFront = TRUE)
+
+racedatalabeloptions <- labelOptions(
+  style = list("font-weight" = "normal", padding = "3px 8px"),
+  textsize = "15px",
+  direction = "auto")
+```
+
+```{r}
+racedatalabels <- sprintf(
+  paste0(
+  "<strong>Name:</strong>%s<br/>",
+  "<strong>Race:</strong> %s - %g<br/>"),
+  racedat$NAME,
+  racedat$variable.x,
+  racedat$percent) %>% lapply(HTML)
+```  
+
+
+```{r}
+leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(data = st_geometry(racedat),
+              fillColor = NULL,
+              color = "blue",
+              weight = 1,
+              fillOpacity = .01,
+              smoothFactor = .2,
+              popup  = racedatalabels,
+              popupOptions = racedatalabeloptions,
+              highlightOptions = racedatahighlights
+              )
 ```
 
