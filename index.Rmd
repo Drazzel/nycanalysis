@@ -94,6 +94,38 @@ nycdatalabels <- sprintf(
   lapply(HTML)
 ```
 
+```{r}
+housingdatalabels <- sprintf(
+  paste0(
+  "<strong>Project Name: </strong>%s<br/>",
+  "<strong># of Available Extremely Low Income Units: </strong>%g<br/>",
+  "<strong># of Available Very Low Income Units: </strong>%g<br/>",
+  "<strong># of Available Low Income Units: </strong>%g<br/>",
+  "<strong># of Available Moderate Income Units: </strong>%g<br/>",
+  "<strong># of Available Middle Income Units: </strong>%g<br/>",
+  "<strong># of Available Other Income Units: </strong>%g<br/>",
+  "<strong># of Available Total Units: </strong>%g<br/>"),
+  housingdata$Project.Name,
+  housingdata$Extremely.Low.Income.Units,
+  housingdata$Very.Low.Income.Units,
+  housingdata$Low.Income.Units,
+  housingdata$Moderate.Income.Units,
+  housingdata$Middle.Income.Units,
+  housingdata$Other.Income.Units,
+  housingdata$Total.Units
+  ) %>% 
+  lapply(HTML)
+
+getColor <- function(housingdata) {
+  sapply(housingdata$Total.Units, function(Total.Units) {
+  if(Total.Units >= 100) {
+    "green"
+  } else {
+    "red"
+  } })
+}
+```
+
 
 ```{r}
 map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>% 
@@ -110,11 +142,12 @@ map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>%
               highlightOptions = nycdatahighlights
               ) %>% 
   addCircleMarkers(housingdata$Longitude, 
-             housingdata$Latitude, 
-             radius = 7.5,
+             housingdata$Latitude,
+             color = getColor(housingdata),
+             radius = ifelse(housingdata$Total.Units >= 100, 10, 5),
              stroke = FALSE,
              fillOpacity = .5,
-             label = as.character(housingdata$All.Counted.Units),
+             label = housingdatalabels,
              group = "Total Affordable Housing Units Available by Property",
              clusterOptions = markerClusterOptions()) %>% 
   addLegend(
