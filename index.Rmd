@@ -192,7 +192,7 @@ saveWidget(map,"index.html")
 
 EVERYTHING BELOW THIS POINT IS EXPERIMENTAL TO ADD RACE TO THE MAP 
 
-```{r}
+```{r, eval=FALSE}
 rm(list=ls())
 
 racevars <- codebook %>% filter(str_detect(label,"race")) %>% filter(str_detect(label,"Population of one"))
@@ -236,7 +236,7 @@ racedatalabeloptions <- labelOptions(
   direction = "auto")
 ```
 
-```{r}
+```{r, eval=FALSE}
 racedatalabels <- sprintf(
   paste0(
   "<strong>Name:</strong>%s<br/>",
@@ -247,7 +247,7 @@ racedatalabels <- sprintf(
 ```  
 
 
-```{r}
+```{r, eval=FALSE}
 leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>% 
   addProviderTiles(providers$CartoDB.Positron) %>%
   addPolygons(data = st_geometry(racedat),
