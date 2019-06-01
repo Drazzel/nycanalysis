@@ -3,9 +3,11 @@ title: "nycanalysis"
 author: "Drazzel Feliu"
 date: "4/19/2019"
 output: html_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
-```{r}
+```{r library_load}
 rm(list = ls())
 
 library(tidyverse)
@@ -21,11 +23,11 @@ library(tigris)
 options(tigris_use_cache = TRUE)
 ```
 
-```{r}
+```{r codebook_build}
 codebook <- load_variables(2017,"acs5")
 ```
 
-```{r}
+```{r shapefiles}
 boroughboundaries <- get_acs(geography = "county",
         variables = "B19013_001",
         state = "NY",
@@ -42,7 +44,7 @@ nycdata <- get_acs(geography = "tract",
         cb = FALSE)
 ```
 
-```{r}
+```{r clean_shapefiles}
 st_erase <- function(x, y) {
   st_difference(x, st_union(st_combine(y)))
   }
@@ -56,25 +58,22 @@ si_water <- area_water("NY", "Richmond", class = "sf")
 ny_water <- rbind(mh_water,bx_water,bk_water,qu_water,si_water)
 
 nycdata2 <- st_erase(nycdata, ny_water)
-```
 
-```{r}
 boroughboundaries <- st_erase(boroughboundaries, ny_water)
 ```
 
-
-```{r}
+```{r append_color_shapefiles_function}
 nyccolor <- colorNumeric(
   palette = "magma",
   domain = nycdata2$estimate)
 ```
 
-```{r}
+```{r load_housing data}
 housingdata <- read.csv("Housing_New_York_Units_by_Building.csv")
 glimpse(housingdata)
 ```
 
-```{r}
+```{r leaflet_option_indices}
 nycdatahighlights <- highlightOptions(
   weight = 4.5,
   color = "#ffffff",
@@ -87,7 +86,7 @@ nycdatalabeloptions <- labelOptions(
   direction = "auto")
 ```
 
-```{r, results='hide'}
+```{r labels, results='hide'}
 nycdatalabels <- sprintf(
   paste0(
   "<strong>Name: </strong>%s<br/>",
@@ -98,7 +97,7 @@ nycdatalabels <- sprintf(
   lapply(HTML)
 ```
 
-```{r}
+```{r popups}
 housingdatalabels <- sprintf(
   paste0(
   "<strong>Project Name: </strong>%s<br/>",
@@ -123,7 +122,7 @@ housingdatalabels <- sprintf(
   lapply(HTML)
 ```
 
-```{r}
+```{r housing_data}
 housingcolor <- colorBin(
   palette = "viridis",
   domain = housingdata$Counted.Rental.Units,
@@ -192,73 +191,8 @@ saveWidget(map,"index.html")
 
 EVERYTHING BELOW THIS POINT IS EXPERIMENTAL TO ADD RACE TO THE MAP 
 
-```{r, eval=FALSE}
-rm(list=ls())
+```{r}
 
-racevars <- codebook %>% filter(str_detect(label,"race")) %>% filter(str_detect(label,"Population of one"))
-
-acsracevars <- as.list(racevars[2:7,1])
-
-racedataindi <- get_acs(geography = "tract",
-        variables = unlist(acsracevars),
-        state = "NY",
-        county = c("New York","Kings","Queens","Bronx","Richmond"),
-        geometry = T,
-        year = 2017,
-        cb = FALSE)
-
-# MAKE EACH RACE ITS OWN COLUMN/VARIABLE OTHERWISE IT WON'T WORK! SIMPLE
-
-racedatatotal <- get_acs(geography = "tract",
-        variables = as.character(racevars[1,1]),
-        state = "NY",
-        county = c("New York","Kings","Queens","Bronx","Richmond"),
-        geometry = T,
-        year = 2017,
-        cb = FALSE)
-
-
-racedatatotal$geometry <- NULL
-
-racedata <- merge(racedataindi,racedatatotal,c("NAME","GEOID"))
-racedat <- racedata %>% select(-variable.y) %>% mutate(percent=estimate.x/estimate.y)
-racedat <- st_erase(racedat,ny_water)
-
-racedatahighlights <- highlightOptions(
-  weight = 4.5,
-  color = "#ffffff",
-  fillOpacity = .5,
-  bringToFront = TRUE)
-
-racedatalabeloptions <- labelOptions(
-  style = list("font-weight" = "normal", padding = "3px 8px"),
-  textsize = "15px",
-  direction = "auto")
 ```
 
-```{r, eval=FALSE}
-racedatalabels <- sprintf(
-  paste0(
-  "<strong>Name:</strong>%s<br/>",
-  "<strong>Race:</strong> %s - %g<br/>"),
-  racedat$NAME,
-  racedat$variable.x,
-  racedat$percent) %>% lapply(HTML)
-```  
-
-
-```{r, eval=FALSE}
-leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>% 
-  addProviderTiles(providers$CartoDB.Positron) %>%
-  addPolygons(data = st_geometry(racedat),
-              fillColor = NULL,
-              color = "blue",
-              weight = 1,
-              fillOpacity = .01,
-              smoothFactor = .2,
-              popup  = racedatalabels,
-              popupOptions = racedatalabeloptions,
-              highlightOptions = racedatahighlights
-              )
-```
 
