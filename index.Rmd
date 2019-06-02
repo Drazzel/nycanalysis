@@ -19,6 +19,7 @@ library(htmlwidgets)
 library(tidycensus)
 library(htmltools)
 library(tigris)
+library(reshape2)
 
 options(tigris_use_cache = TRUE)
 ```
@@ -141,6 +142,66 @@ getRadius <- function(housingdata) {
 }
 ```
 
+```{r add_race_variable}
+racecodebook <- codebook %>% filter(str_detect(label,"race")) %>% filter(str_detect(label,"Population of one")) %>%
+  mutate(names="name", count=1:7, merge=paste(names,count, sep="")) %>% select(-c(names,count))
+
+racedataindi <- get_acs(geography = "tract",
+        variables = unlist(racecodebook$name),
+        state = "NY",
+        county = c("New York","Kings","Queens","Bronx","Richmond"),
+        geometry = T,
+        year = 2017,
+        cb = FALSE)
+
+racedata <- racedataindi %>% filter(variable!="C02003_002") %>% group_by(GEOID) %>% mutate(sum=sum(estimate)) %>%
+  mutate(percent=estimate/sum(estimate))
+
+racedata <- merge(racedata,racecodebook[c(1,2)],by.x="variable",by.y="name") %>% select(-variable) %>%
+  mutate(label=str_remove(label,"Estimate!!Total!!Population of one race!!")) %>% group_by(GEOID) %>% arrange(GEOID)
+
+racedata <- racedata %>% 
+  select(-c(moe,estimate,sum)) %>% 
+  mutate(percent=replace_na(percent,0)) %>% 
+  spread(label,percent) %>% arrange(GEOID)
+  
+#CLEAN SHAPEFILES
+racedata <- st_erase(racedata,ny_water)
+```
+
+```{r mapping_race_variables}
+racedatahighlights <- highlightOptions(
+  weight = 4.5,
+  color = "#ffffff",
+  fillOpacity = .5,
+  bringToFront = TRUE)
+
+racedatalabeloptions <- labelOptions(
+  style = list("font-weight" = "normal",padding = "3px 8px"),
+  textsize = "15px",
+  direction = "auto"
+)
+
+racedatalabels <- sprintf(
+  paste0(
+    "<strong>Name:</strong> %s<br/>",
+    "<strong>Race:</strong> White - %g%%<br/>",
+    "<strong>Race:</strong> Black - %g%%<br/>",
+    "<strong>Race:</strong> Asian - %g%%<br/>",
+    "<strong>Race:</strong> American Indian - %g%%<br/>",
+    "<strong>Race:</strong> Native Hawaiian - %g%%<br/>",
+    "<strong>Race:</strong> Other - %g%%<br/>"),
+  racedata$NAME,
+  round(racedata$White,2)*100,
+  round(racedata$`Black or African American`,2)*100,
+  round(racedata$`Asian alone`,2)*100,
+  round(racedata$`American Indian and Alaska Native`,2)*100,
+  round(racedata$`Native Hawaiian and Other Pacific Islander`,2)*100,
+  round(racedata$`Some other race`,2)*100
+  ) %>% lapply(HTML)
+
+```
+
 ```{r}
 map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>% 
   addProviderTiles(providers$CartoDB.Positron) %>%
@@ -162,6 +223,17 @@ map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>%
               group = "Income",
               highlightOptions = nycdatahighlights
   ) %>% 
+  addPolygons(data = st_geometry(racedata),
+              fillColor = NULL,
+              color = "black",
+              weight = 1,
+              fillOpacity = .01,
+              smoothFactor = .2,
+              popup  = racedatalabels,
+              popupOptions = racedatalabeloptions,
+              highlightOptions = racedatahighlights,
+              group = "Race"
+              ) %>% 
   addLegend(title = "Median Income",
             pal = nyccolor,
             values = nycdata2$estimate,
@@ -181,18 +253,10 @@ map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>%
             position = "topright",
             group = "Housing") %>% 
   addLayersControl(
-    overlayGroups = c("Income", "Housing"),
+    overlayGroups = c("Income", "Housing","Race"),
     position = "bottomright")
 ```
 
 ```{r}
 saveWidget(map,"index.html")
 ```
-
-EVERYTHING BELOW THIS POINT IS EXPERIMENTAL TO ADD RACE TO THE MAP 
-
-```{r}
-
-```
-
-
