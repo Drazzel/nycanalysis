@@ -260,3 +260,23 @@ map <- leaflet() %>% setView(lng = -74.0060, lat = 40.7128, zoom = 11) %>%
 ```{r}
 saveWidget(map,"index.html")
 ```
+
+
+```{r data_analysis}
+nycdata3 <- nycdata2
+racedata2 <- racedata
+
+nycdata3$geometry <- NULL
+racedata2$geometry <- NULL
+
+
+datanalysis <- merge(nycdata3,racedata2[(c(1,3:8))],by.x="GEOID",by.y = "GEOID")
+
+cor.test(datanalysis$estimate,datanalysis$White,method= c("pearson"))
+cor.test(datanalysis$estimate,datanalysis$`American Indian and Alaska Native`,method= c("pearson"))
+cor.test(datanalysis$estimate,datanalysis$`Asian alone`,method= c("pearson"))
+cor.test(datanalysis$estimate,datanalysis$`Black or African American`,method= c("pearson"))
+cor.test(datanalysis$estimate,datanalysis$`Native Hawaiian and Other Pacific Islander`,method= c("pearson"))
+cor.test(datanalysis$estimate,datanalysis$`Some other race`,method= c("pearson"))
+```
+
