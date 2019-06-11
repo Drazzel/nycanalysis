@@ -7,7 +7,7 @@ editor_options:
   chunk_output_type: inline
 ---
 
-```{r library_load}
+```{r library_load, include=FALSE}
 rm(list = ls())
 
 library(tidyverse)
@@ -28,7 +28,7 @@ options(tigris_use_cache = TRUE)
 codebook <- load_variables(2017,"acs5")
 ```
 
-```{r shapefiles}
+```{r shapefiles, include=FALSE}
 boroughboundaries <- get_acs(geography = "county",
         variables = "B19013_001",
         state = "NY",
@@ -45,7 +45,7 @@ nycdata <- get_acs(geography = "tract",
         cb = FALSE)
 ```
 
-```{r clean_shapefiles}
+```{r clean_shapefiles, include=FALSE}
 st_erase <- function(x, y) {
   st_difference(x, st_union(st_combine(y)))
   }
@@ -63,18 +63,18 @@ nycdata2 <- st_erase(nycdata, ny_water)
 boroughboundaries <- st_erase(boroughboundaries, ny_water)
 ```
 
-```{r append_color_shapefiles_function}
+```{r append_color_shapefiles_function, include=FALSE}
 nyccolor <- colorNumeric(
   palette = "magma",
   domain = nycdata2$estimate)
 ```
 
-```{r load_housing data}
+```{r load_housing data, include=FALSE}
 housingdata <- read.csv("Housing_New_York_Units_by_Building.csv")
 glimpse(housingdata)
 ```
 
-```{r leaflet_option_indices}
+```{r leaflet_option_indices, include=FALSE}
 nycdatahighlights <- highlightOptions(
   weight = 4.5,
   color = "#ffffff",
@@ -87,7 +87,7 @@ nycdatalabeloptions <- labelOptions(
   direction = "auto")
 ```
 
-```{r labels, results='hide'}
+```{r labels, include=FALSE}
 nycdatalabels <- sprintf(
   paste0(
   "<strong>Name: </strong>%s<br/>",
@@ -98,7 +98,7 @@ nycdatalabels <- sprintf(
   lapply(HTML)
 ```
 
-```{r popups}
+```{r popups, include=FALSE}
 housingdatalabels <- sprintf(
   paste0(
   "<strong>Project Name: </strong>%s<br/>",
@@ -123,7 +123,7 @@ housingdatalabels <- sprintf(
   lapply(HTML)
 ```
 
-```{r housing_data}
+```{r housing_data, include=FALSE}
 housingcolor <- colorBin(
   palette = "viridis",
   domain = housingdata$Counted.Rental.Units,
@@ -142,7 +142,7 @@ getRadius <- function(housingdata) {
 }
 ```
 
-```{r add_race_variable}
+```{r add_race_variable, include=FALSE}
 racecodebook <- codebook %>% filter(str_detect(label,"race")) %>% filter(str_detect(label,"Population of one")) %>%
   mutate(names="name", count=1:7, merge=paste(names,count, sep="")) %>% select(-c(names,count))
 
@@ -169,7 +169,7 @@ racedata <- racedata %>%
 racedata <- st_erase(racedata,ny_water)
 ```
 
-```{r mapping_race_variables}
+```{r mapping_race_variables, include=FALSE}
 racedatahighlights <- highlightOptions(
   weight = 4.5,
   color = "#ffffff",
@@ -262,16 +262,18 @@ saveWidget(map,"index.html")
 ```
 
 
-```{r data_analysis}
+```{r prep_for_data_analysis, include=FALSE}
 nycdata3 <- nycdata2
 racedata2 <- racedata
 
 nycdata3$geometry <- NULL
 racedata2$geometry <- NULL
 
-
 datanalysis <- merge(nycdata3,racedata2[(c(1,3:8))],by.x="GEOID",by.y = "GEOID")
 
+```
+
+```{r conduct_data_analysis, include=FALSE}
 cor.test(datanalysis$estimate,datanalysis$White,method= c("pearson"))
 cor.test(datanalysis$estimate,datanalysis$`American Indian and Alaska Native`,method= c("pearson"))
 cor.test(datanalysis$estimate,datanalysis$`Asian alone`,method= c("pearson"))
